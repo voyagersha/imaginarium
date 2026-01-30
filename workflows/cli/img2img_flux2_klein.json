@@ -1,0 +1,201 @@
+{
+  "persona_stack": {
+    "name": "img2img_flux2_klein",
+    "version": 1,
+    "patch_points": {
+      "init_image": {
+        "node_id": "4",
+        "input_key": "image"
+      },
+      "positive_prompt": {
+        "node_id": "7",
+        "input_key": "text"
+      },
+      "negative_prompt": {
+        "node_id": "8",
+        "input_key": "text"
+      },
+      "flux_guidance_positive": {
+        "node_id": "9",
+        "input_key": "guidance"
+      },
+      "flux_guidance_negative": {
+        "node_id": "10",
+        "input_key": "guidance"
+      },
+      "clip_skip": {
+        "node_id": "6",
+        "input_key": "stop_at_clip_layer"
+      },
+      "seed": {
+        "node_id": "11",
+        "input_key": "seed"
+      },
+      "steps": {
+        "node_id": "11",
+        "input_key": "steps"
+      },
+      "cfg": {
+        "node_id": "11",
+        "input_key": "cfg"
+      },
+      "sampler_name": {
+        "node_id": "11",
+        "input_key": "sampler_name"
+      },
+      "scheduler": {
+        "node_id": "11",
+        "input_key": "scheduler"
+      },
+      "denoise": {
+        "node_id": "11",
+        "input_key": "denoise"
+      },
+      "filename_prefix": {
+        "node_id": "13",
+        "input_key": "filename_prefix"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "flux-2-klein-4b.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "flux2"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "flux2-vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "init.png"
+      }
+    },
+    "5": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "4",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "6": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "stop_at_clip_layer": -1
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "PROMPT",
+        "clip": [
+          "6",
+          0
+        ]
+      }
+    },
+    "8": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "",
+        "clip": [
+          "6",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "FluxGuidance",
+      "inputs": {
+        "conditioning": [
+          "7",
+          0
+        ],
+        "guidance": 1.0
+      }
+    },
+    "10": {
+      "class_type": "FluxGuidance",
+      "inputs": {
+        "conditioning": [
+          "8",
+          0
+        ],
+        "guidance": 1.0
+      }
+    },
+    "11": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 0,
+        "steps": 4,
+        "cfg": 1.0,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 0.5,
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "9",
+          0
+        ],
+        "negative": [
+          "10",
+          0
+        ],
+        "latent_image": [
+          "5",
+          0
+        ]
+      }
+    },
+    "12": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "11",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "13": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/raw",
+        "images": [
+          "12",
+          0
+        ]
+      }
+    }
+  }
+}

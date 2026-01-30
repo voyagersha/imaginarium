@@ -1,0 +1,403 @@
+{
+  "persona_stack": {
+    "name": "character_pose_sdxl",
+    "version": 1,
+    "patch_points": {
+      "identity_image_1": {
+        "node_id": "2",
+        "input_key": "image"
+      },
+      "identity_image_2": {
+        "node_id": "4",
+        "input_key": "image"
+      },
+      "identity_image_3": {
+        "node_id": "5",
+        "input_key": "image"
+      },
+      "identity_image_4": {
+        "node_id": "6",
+        "input_key": "image"
+      },
+      "identity_image_5": {
+        "node_id": "7",
+        "input_key": "image"
+      },
+      "identity_weight_1": {
+        "node_id": "8",
+        "input_key": "weight"
+      },
+      "identity_weight_2": {
+        "node_id": "9",
+        "input_key": "weight"
+      },
+      "identity_weight_3": {
+        "node_id": "10",
+        "input_key": "weight"
+      },
+      "identity_weight_4": {
+        "node_id": "11",
+        "input_key": "weight"
+      },
+      "identity_weight_5": {
+        "node_id": "12",
+        "input_key": "weight"
+      },
+      "pose_image": {
+        "node_id": "17",
+        "input_key": "image"
+      },
+      "pose_strength": {
+        "node_id": "20",
+        "input_key": "strength"
+      },
+      "pose_start": {
+        "node_id": "20",
+        "input_key": "start_percent"
+      },
+      "pose_end": {
+        "node_id": "20",
+        "input_key": "end_percent"
+      },
+      "positive_prompt": {
+        "node_id": "15",
+        "input_key": "text"
+      },
+      "negative_prompt": {
+        "node_id": "16",
+        "input_key": "text"
+      },
+      "clip_skip": {
+        "node_id": "14",
+        "input_key": "stop_at_clip_layer"
+      },
+      "seed": {
+        "node_id": "21",
+        "input_key": "seed"
+      },
+      "steps": {
+        "node_id": "21",
+        "input_key": "steps"
+      },
+      "cfg": {
+        "node_id": "21",
+        "input_key": "cfg"
+      },
+      "sampler_name": {
+        "node_id": "21",
+        "input_key": "sampler_name"
+      },
+      "scheduler": {
+        "node_id": "21",
+        "input_key": "scheduler"
+      },
+      "width": {
+        "node_id": "13",
+        "input_key": "width"
+      },
+      "height": {
+        "node_id": "13",
+        "input_key": "height"
+      },
+      "batch_size": {
+        "node_id": "13",
+        "input_key": "batch_size"
+      },
+      "filename_prefix": {
+        "node_id": "23",
+        "input_key": "filename_prefix"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "sd_xl_base_1.0.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "identity_1.png"
+      }
+    },
+    "3": {
+      "class_type": "IPAdapterUnifiedLoader",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "preset": "PLUS FACE (portraits)"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "identity_2.png"
+      }
+    },
+    "5": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "identity_3.png"
+      }
+    },
+    "6": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "identity_4.png"
+      }
+    },
+    "7": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "identity_5.png"
+      }
+    },
+    "8": {
+      "class_type": "IPAdapter",
+      "inputs": {
+        "model": [
+          "3",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          1
+        ],
+        "image": [
+          "2",
+          0
+        ],
+        "weight": 1.0,
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "weight_type": "standard"
+      }
+    },
+    "9": {
+      "class_type": "IPAdapter",
+      "inputs": {
+        "model": [
+          "8",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          1
+        ],
+        "image": [
+          "4",
+          0
+        ],
+        "weight": 1.0,
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "weight_type": "standard"
+      }
+    },
+    "10": {
+      "class_type": "IPAdapter",
+      "inputs": {
+        "model": [
+          "9",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          1
+        ],
+        "image": [
+          "5",
+          0
+        ],
+        "weight": 1.0,
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "weight_type": "standard"
+      }
+    },
+    "11": {
+      "class_type": "IPAdapter",
+      "inputs": {
+        "model": [
+          "10",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          1
+        ],
+        "image": [
+          "6",
+          0
+        ],
+        "weight": 1.0,
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "weight_type": "standard"
+      }
+    },
+    "12": {
+      "class_type": "IPAdapter",
+      "inputs": {
+        "model": [
+          "11",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          1
+        ],
+        "image": [
+          "7",
+          0
+        ],
+        "weight": 1.0,
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "weight_type": "standard"
+      }
+    },
+    "13": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    "14": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "stop_at_clip_layer": -1
+      }
+    },
+    "15": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "PROMPT",
+        "clip": [
+          "14",
+          0
+        ]
+      }
+    },
+    "16": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "",
+        "clip": [
+          "14",
+          0
+        ]
+      }
+    },
+    "17": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "pose.png"
+      }
+    },
+    "18": {
+      "class_type": "OpenposePreprocessor",
+      "inputs": {
+        "image": [
+          "17",
+          0
+        ],
+        "detect_hand": "enable",
+        "detect_body": "enable",
+        "detect_face": "enable",
+        "resolution": 512,
+        "scale_stick_for_xinsr_cn": "disable"
+      }
+    },
+    "19": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "OpenPoseXL2.safetensors"
+      }
+    },
+    "20": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "15",
+          0
+        ],
+        "negative": [
+          "16",
+          0
+        ],
+        "control_net": [
+          "19",
+          0
+        ],
+        "image": [
+          "18",
+          0
+        ],
+        "strength": 1.0,
+        "start_percent": 0.0,
+        "end_percent": 1.0
+      }
+    },
+    "21": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 0,
+        "steps": 20,
+        "cfg": 7.0,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1.0,
+        "model": [
+          "12",
+          0
+        ],
+        "positive": [
+          "20",
+          0
+        ],
+        "negative": [
+          "20",
+          1
+        ],
+        "latent_image": [
+          "13",
+          0
+        ]
+      }
+    },
+    "22": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "21",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "23": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/raw",
+        "images": [
+          "22",
+          0
+        ]
+      }
+    }
+  }
+}

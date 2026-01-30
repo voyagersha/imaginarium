@@ -1,0 +1,159 @@
+{
+  "persona_stack": {
+    "name": "img2img_realvis",
+    "version": 1,
+    "patch_points": {
+      "init_image": {
+        "node_id": "2",
+        "input_key": "image"
+      },
+      "positive_prompt": {
+        "node_id": "5",
+        "input_key": "text"
+      },
+      "negative_prompt": {
+        "node_id": "6",
+        "input_key": "text"
+      },
+      "clip_skip": {
+        "node_id": "4",
+        "input_key": "stop_at_clip_layer"
+      },
+      "seed": {
+        "node_id": "7",
+        "input_key": "seed"
+      },
+      "steps": {
+        "node_id": "7",
+        "input_key": "steps"
+      },
+      "cfg": {
+        "node_id": "7",
+        "input_key": "cfg"
+      },
+      "sampler_name": {
+        "node_id": "7",
+        "input_key": "sampler_name"
+      },
+      "scheduler": {
+        "node_id": "7",
+        "input_key": "scheduler"
+      },
+      "denoise": {
+        "node_id": "7",
+        "input_key": "denoise"
+      },
+      "filename_prefix": {
+        "node_id": "9",
+        "input_key": "filename_prefix"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "init.png"
+      }
+    },
+    "3": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "2",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "4": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "stop_at_clip_layer": -1
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "PROMPT",
+        "clip": [
+          "4",
+          0
+        ]
+      }
+    },
+    "6": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "",
+        "clip": [
+          "4",
+          0
+        ]
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 0,
+        "steps": 28,
+        "cfg": 5.5,
+        "sampler_name": "dpmpp_sde",
+        "scheduler": "karras",
+        "denoise": 0.5,
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "5",
+          0
+        ],
+        "negative": [
+          "6",
+          0
+        ],
+        "latent_image": [
+          "3",
+          0
+        ]
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/raw",
+        "images": [
+          "8",
+          0
+        ]
+      }
+    }
+  }
+}

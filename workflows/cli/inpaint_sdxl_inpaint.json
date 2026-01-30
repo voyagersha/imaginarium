@@ -1,0 +1,236 @@
+{
+  "persona_stack": {
+    "name": "inpaint_sdxl_inpaint",
+    "version": 1,
+    "patch_points": {
+      "positive_prompt": {
+        "node_id": "6",
+        "input_key": "text"
+      },
+      "negative_prompt": {
+        "node_id": "7",
+        "input_key": "text"
+      },
+      "clip_skip": {
+        "node_id": "10",
+        "input_key": "stop_at_clip_layer"
+      },
+      "seed": {
+        "node_id": "9",
+        "input_key": "seed"
+      },
+      "steps": {
+        "node_id": "9",
+        "input_key": "steps"
+      },
+      "cfg": {
+        "node_id": "9",
+        "input_key": "cfg"
+      },
+      "sampler_name": {
+        "node_id": "9",
+        "input_key": "sampler_name"
+      },
+      "scheduler": {
+        "node_id": "9",
+        "input_key": "scheduler"
+      },
+      "denoise": {
+        "node_id": "9",
+        "input_key": "denoise"
+      },
+      "filename_prefix": {
+        "node_id": "13",
+        "input_key": "filename_prefix"
+      },
+      "init_image": {
+        "node_id": "2",
+        "input_key": "image"
+      },
+      "mask_image": {
+        "node_id": "3",
+        "input_key": "image"
+      },
+      "mask_channel": {
+        "node_id": "3",
+        "input_key": "channel"
+      },
+      "mask_threshold": {
+        "node_id": "4",
+        "input_key": "value"
+      },
+      "mask_grow": {
+        "node_id": "5",
+        "input_key": "expand"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "sd_xl_base_1.0_inpainting.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "init.png"
+      }
+    },
+    "3": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "mask.png",
+        "channel": "red"
+      }
+    },
+    "4": {
+      "class_type": "ThresholdMask",
+      "inputs": {
+        "mask": [
+          "3",
+          0
+        ],
+        "value": 0.2
+      }
+    },
+    "5": {
+      "class_type": "GrowMask",
+      "inputs": {
+        "mask": [
+          "4",
+          0
+        ],
+        "expand": 4,
+        "tapered_corners": true
+      }
+    },
+    "6": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "PROMPT",
+        "clip": [
+          "10",
+          0
+        ]
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "",
+        "clip": [
+          "10",
+          0
+        ]
+      }
+    },
+    "8": {
+      "class_type": "InpaintModelConditioning",
+      "inputs": {
+        "positive": [
+          "6",
+          0
+        ],
+        "negative": [
+          "7",
+          0
+        ],
+        "pixels": [
+          "2",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ],
+        "mask": [
+          "5",
+          0
+        ],
+        "noise_mask": true
+      }
+    },
+    "9": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 0,
+        "steps": 25,
+        "cfg": 5.5,
+        "sampler_name": "dpmpp_sde",
+        "scheduler": "karras",
+        "denoise": 0.6,
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "8",
+          0
+        ],
+        "negative": [
+          "8",
+          1
+        ],
+        "latent_image": [
+          "8",
+          2
+        ]
+      }
+    },
+    "11": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "9",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "12": {
+      "class_type": "ImageCompositeMasked",
+      "inputs": {
+        "destination": [
+          "2",
+          0
+        ],
+        "source": [
+          "11",
+          0
+        ],
+        "x": 0,
+        "y": 0,
+        "resize_source": false,
+        "mask": [
+          "5",
+          0
+        ]
+      }
+    },
+    "13": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/repaired",
+        "images": [
+          "12",
+          0
+        ]
+      }
+    },
+    "10": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "stop_at_clip_layer": -1
+      }
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "artifacts": [
+    {
+      "id": "sdxl_base",
+      "repo_id": "stabilityai/stable-diffusion-xl-base-1.0",
+      "revision": "462165984030d82259a11f4367a4eed129e94a7b",
+      "filename": "sd_xl_base_1.0.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/checkpoints",
+      "dest_filename": "sd_xl_base_1.0.safetensors",
+      "sha256": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b",
+      "requested_revision": "main"
+    },
+    {
+      "id": "sdxl_inpaint",
+      "repo_id": "benjamin-paine/sd-xl-alternative-bases",
+      "revision": "2c65165f0d5c3d93f671ef7613f3a94f4b3ec30a",
+      "filename": "sd_xl_base_1.0_inpainting_0.1.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/checkpoints",
+      "dest_filename": "sd_xl_base_1.0_inpainting.safetensors",
+      "sha256": "fe1b97fe6544814eb6fc8ce53f04ad8d339ec6946b58b0afd566fcc47813fa8a",
+      "requested_revision": "main"
+    },
+    {
+      "id": "sdxl_refiner",
+      "repo_id": "stabilityai/stable-diffusion-xl-refiner-1.0",
+      "revision": "5d4cfe854c9a9a87939ff3653551c2b3c99a4356",
+      "filename": "sd_xl_refiner_1.0.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/checkpoints",
+      "dest_filename": "sd_xl_refiner_1.0.safetensors",
+      "sha256": "7440042bbdc8a24813002c09b6b69b64dc90fded4472613437b7f55f9b7d9c5f",
+      "requested_revision": "main"
+    },
+    {
+      "id": "flux2_klein_text_encoder_qwen_3_4b",
+      "repo_id": "Comfy-Org/vae-text-encorder-for-flux-klein-4b",
+      "revision": "a9e4ca87c16db4c4e1a16406a9ddb300ab0ae246",
+      "subfolder": "split_files/text_encoders",
+      "filename": "qwen_3_4b.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/text_encoders",
+      "dest_filename": "qwen_3_4b.safetensors",
+      "sha256": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+      "requested_revision": "main"
+    },
+    {
+      "id": "flux2_klein_vae",
+      "repo_id": "Comfy-Org/vae-text-encorder-for-flux-klein-4b",
+      "revision": "a9e4ca87c16db4c4e1a16406a9ddb300ab0ae246",
+      "subfolder": "split_files/vae",
+      "filename": "flux2-vae.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/vae",
+      "dest_filename": "flux2-vae.safetensors",
+      "sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3",
+      "requested_revision": "main"
+    },
+    {
+      "id": "z_image_turbo_diffusion_bf16",
+      "repo_id": "Comfy-Org/z_image_turbo",
+      "revision": "2f862278568d3f0a83167a16e5f11094da6dee72",
+      "subfolder": "split_files/diffusion_models",
+      "filename": "z_image_turbo_bf16.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/diffusion_models",
+      "dest_filename": "z_image_turbo_bf16.safetensors",
+      "sha256": "2407613050b809ffdff18a4ac99af83ea6b95443ecebdf80e064a79c825574a6",
+      "requested_revision": "main"
+    },
+    {
+      "id": "z_image_turbo_vae",
+      "repo_id": "Comfy-Org/z_image_turbo",
+      "revision": "2f862278568d3f0a83167a16e5f11094da6dee72",
+      "subfolder": "split_files/vae",
+      "filename": "ae.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/vae",
+      "dest_filename": "ae.safetensors",
+      "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+      "requested_revision": "main"
+    },
+    {
+      "id": "z_image_turbo_lora_pixel_art",
+      "repo_id": "tarn59/pixel_art_style_lora_z_image_turbo",
+      "revision": "0a5092d1619664d94a5a36784f92db84b3ae62bd",
+      "filename": "pixel_art_style_z_image_turbo.safetensors",
+      "dest_dir": "vendor/ComfyUI/models/loras",
+      "dest_filename": "pixel_art_style_z_image_turbo.safetensors",
+      "sha256": "09b1b45ceed0202929bca528e51b50208d0160f4e9d2ba0f42cb7e739a43577f",
+      "requested_revision": "main"
+    }
+  ]
+}

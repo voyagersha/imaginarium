@@ -1,0 +1,183 @@
+{
+  "persona_stack": {
+    "name": "img2img_z_image_turbo",
+    "version": 1,
+    "patch_points": {
+      "init_image": {
+        "node_id": "4",
+        "input_key": "image"
+      },
+      "positive_prompt": {
+        "node_id": "7",
+        "input_key": "text"
+      },
+      "negative_prompt": {
+        "node_id": "8",
+        "input_key": "text"
+      },
+      "clip_skip": {
+        "node_id": "6",
+        "input_key": "stop_at_clip_layer"
+      },
+      "seed": {
+        "node_id": "10",
+        "input_key": "seed"
+      },
+      "steps": {
+        "node_id": "10",
+        "input_key": "steps"
+      },
+      "cfg": {
+        "node_id": "10",
+        "input_key": "cfg"
+      },
+      "sampler_name": {
+        "node_id": "10",
+        "input_key": "sampler_name"
+      },
+      "scheduler": {
+        "node_id": "10",
+        "input_key": "scheduler"
+      },
+      "denoise": {
+        "node_id": "10",
+        "input_key": "denoise"
+      },
+      "filename_prefix": {
+        "node_id": "12",
+        "input_key": "filename_prefix"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "z_image_turbo_bf16.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "ae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "init.png"
+      }
+    },
+    "5": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "4",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "6": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "stop_at_clip_layer": -1
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "PROMPT",
+        "clip": [
+          "6",
+          0
+        ]
+      }
+    },
+    "8": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "",
+        "clip": [
+          "6",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "ModelSamplingAuraFlow",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "shift": 3
+      }
+    },
+    "10": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 0,
+        "steps": 4,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "denoise": 0.5,
+        "model": [
+          "9",
+          0
+        ],
+        "positive": [
+          "7",
+          0
+        ],
+        "negative": [
+          "8",
+          0
+        ],
+        "latent_image": [
+          "5",
+          0
+        ]
+      }
+    },
+    "11": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "10",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "12": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/raw",
+        "images": [
+          "11",
+          0
+        ]
+      }
+    }
+  }
+}

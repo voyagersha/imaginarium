@@ -1,0 +1,40 @@
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.pycache/
+
+# uv / python
+.venv/
+.python-version
+.uv-cache/
+.hf-cache/
+.pip-cache/
+.mplconfig/
+.comfyui.pid
+.env
+.tmp/
+.tmp_smoke/
+
+# ComfyUI vendor + outputs/models
+vendor/ComfyUI/
+
+# Big model artifacts (defense-in-depth if weights are placed elsewhere)
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+
+# Generated runs
+runs/*
+!runs/.gitkeep
+
+# Anchor images (keep docs + template only)
+anchors_identity/*
+!anchors_identity/README.md
+!anchors_identity/_template/
+!anchors_identity/_template/**
+
+# Local-only model/workflow bundles
+.local_models/

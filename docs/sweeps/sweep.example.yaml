@@ -1,0 +1,91 @@
+# Example sweep config with placeholder values.
+version: 1
+
+settings:
+  comfy_url: http://127.0.0.1:8188
+  timeout_s: 1200
+  modes: [txt2img, img2img, inpaint, img2img_identity]
+  # Default output root (if out_root is omitted):
+  # runs/sweeps/<timestamp>/runs
+  # out_root: runs/sweeps/your_custom_sweep/runs
+  # Optional: run only these workflow names (others are skipped).
+  # only_workflows: [flux2_klein, z_image_turbo]
+
+workflows:
+  txt2img:
+    - name: flux2_klein
+      path: workflows/cli/txt2img_flux2_klein.json
+      params:
+        steps: 4
+        cfg: 1.0
+        sampler_name: euler
+        scheduler: normal
+      grid:
+        steps: [4, 6, 8]
+      prompts:
+        positive: "<positive prompt>"
+        negative: "<negative prompt>"
+  img2img:
+    - name: z_image_turbo
+      path: workflows/cli/img2img_z_image_turbo.json
+      params:
+        steps: 8
+        cfg: 1.0
+        sampler_name: euler
+        scheduler: normal
+      grid:
+        denoise: [0.3, 0.5]
+    - name: flux2_klein
+      path: workflows/cli/img2img_flux2_klein.json
+      params:
+        steps: 6
+        cfg: 1.0
+        flux_guidance: 1.0
+      grid:
+        denoise: [0.2, 0.4]
+  inpaint:
+    - name: sdxl_inpaint
+      path: workflows/cli/inpaint_sdxl_inpaint.json
+      params:
+        steps: 25
+        cfg: 5.5
+        sampler_name: dpmpp_sde
+        scheduler: karras
+      grid:
+        denoise: [0.6, 0.8]
+  img2img_identity:
+    - name: flux2_klein_identity
+      path: workflows/cli/img2img_identity_flux2_klein.json
+      params:
+        steps: 6
+        cfg: 1.0
+        flux_guidance: 1.0
+      grid:
+        denoise: [0.2, 0.4]
+
+inputs:
+  image: path/to/input.png
+  mask: path/to/mask.png
+  anchors: [path/to/anchors]
+  anchor_count: 3
+  anchor_pad: true
+  anchor_pad_color: black
+  anchor_max_side: 768
+  anchor_weight_scale: 1.0
+
+prompts:
+  positive: "<positive prompt>"
+  negative: "<negative prompt>"
+  by_mode:
+    inpaint:
+      positive: "<inpaint positive prompt>"
+      negative: "<inpaint negative prompt>"
+
+params:
+  seed: 42
+
+grid:
+  cfg:
+    start: 0.98
+    end: 1.02
+    step: 0.01
