@@ -1,0 +1,298 @@
+{
+  "persona_stack": {
+    "name": "img2img_headswap_z_image_turbo_v1_mask_input",
+    "version": 1,
+    "patch_points": {
+      "init_image": {
+        "node_id": "1",
+        "input_key": "image"
+      },
+      "positive_prompt": {
+        "node_id": "11",
+        "input_key": "text"
+      },
+      "negative_prompt": {
+        "node_id": "12",
+        "input_key": "text"
+      },
+      "clip_skip": {
+        "node_id": "10",
+        "input_key": "stop_at_clip_layer"
+      },
+      "seed": {
+        "node_id": "15",
+        "input_key": "seed"
+      },
+      "steps": {
+        "node_id": "15",
+        "input_key": "steps"
+      },
+      "cfg": {
+        "node_id": "15",
+        "input_key": "cfg"
+      },
+      "sampler_name": {
+        "node_id": "15",
+        "input_key": "sampler_name"
+      },
+      "scheduler": {
+        "node_id": "15",
+        "input_key": "scheduler"
+      },
+      "denoise": {
+        "node_id": "15",
+        "input_key": "denoise"
+      },
+      "filename_prefix": {
+        "node_id": "18",
+        "input_key": "filename_prefix"
+      },
+      "mask_image": {
+        "node_id": "2",
+        "input_key": "image"
+      },
+      "mask_channel": {
+        "node_id": "2",
+        "input_key": "channel"
+      },
+      "mask_threshold": {
+        "node_id": "3",
+        "input_key": "value"
+      },
+      "mask_grow": {
+        "node_id": "4",
+        "input_key": "expand"
+      },
+      "crop_mask_blend_pixels": {
+        "node_id": "6",
+        "input_key": "mask_blend_pixels"
+      },
+      "crop_context_from_mask_extend_factor": {
+        "node_id": "6",
+        "input_key": "context_from_mask_extend_factor"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "init.png"
+      }
+    },
+    "2": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "mask.png",
+        "channel": "red"
+      }
+    },
+    "3": {
+      "class_type": "ThresholdMask",
+      "inputs": {
+        "mask": [
+          "2",
+          0
+        ],
+        "value": 0.2
+      }
+    },
+    "4": {
+      "class_type": "GrowMask",
+      "inputs": {
+        "mask": [
+          "3",
+          0
+        ],
+        "expand": 4,
+        "tapered_corners": true
+      }
+    },
+    "6": {
+      "class_type": "InpaintCropImproved",
+      "inputs": {
+        "image": [
+          "1",
+          0
+        ],
+        "mask": [
+          "4",
+          0
+        ],
+        "downscale_algorithm": "bilinear",
+        "upscale_algorithm": "bicubic",
+        "preresize": false,
+        "preresize_mode": "ensure minimum resolution",
+        "preresize_min_width": 1024,
+        "preresize_min_height": 1024,
+        "preresize_max_width": 16384,
+        "preresize_max_height": 16384,
+        "mask_fill_holes": true,
+        "mask_expand_pixels": 0,
+        "mask_invert": false,
+        "mask_blend_pixels": 64,
+        "mask_hipass_filter": 0.1,
+        "extend_for_outpainting": false,
+        "extend_up_factor": 1,
+        "extend_down_factor": 1,
+        "extend_left_factor": 1,
+        "extend_right_factor": 1,
+        "context_from_mask_extend_factor": 1.2,
+        "output_resize_to_target_size": true,
+        "output_target_width": 1024,
+        "output_target_height": 1024,
+        "output_padding": "32",
+        "device_mode": "gpu (much faster)"
+      }
+    },
+    "7": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "z_image_turbo_bf16.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "8": {
+      "class_type": "DifferentialDiffusion",
+      "inputs": {
+        "model": [
+          "7",
+          0
+        ],
+        "strength": 1.0
+      }
+    },
+    "9": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2"
+      }
+    },
+    "10": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "9",
+          0
+        ],
+        "stop_at_clip_layer": -1
+      }
+    },
+    "11": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "a woman",
+        "clip": [
+          "10",
+          0
+        ]
+      }
+    },
+    "12": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "ugly, deformed, disfigured, poor anatomy, poorly drawn hands, feet, face, extra limbs, blurry, low quality, jpeg artifacts, low contrast, watermark, signature, out of frame, cut off, painting, cartoon, anime, 3d render, illustration",
+        "clip": [
+          "10",
+          0
+        ]
+      }
+    },
+    "13": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "ae.safetensors"
+      }
+    },
+    "14": {
+      "class_type": "InpaintModelConditioning",
+      "inputs": {
+        "positive": [
+          "11",
+          0
+        ],
+        "negative": [
+          "12",
+          0
+        ],
+        "vae": [
+          "13",
+          0
+        ],
+        "pixels": [
+          "6",
+          1
+        ],
+        "mask": [
+          "6",
+          2
+        ],
+        "noise_mask": true
+      }
+    },
+    "15": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 0,
+        "steps": 8,
+        "cfg": 1.7,
+        "sampler_name": "ddim",
+        "scheduler": "linear_quadratic",
+        "denoise": 0.35,
+        "model": [
+          "8",
+          0
+        ],
+        "positive": [
+          "14",
+          0
+        ],
+        "negative": [
+          "14",
+          1
+        ],
+        "latent_image": [
+          "14",
+          2
+        ]
+      }
+    },
+    "16": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "15",
+          0
+        ],
+        "vae": [
+          "13",
+          0
+        ]
+      }
+    },
+    "17": {
+      "class_type": "InpaintStitchImproved",
+      "inputs": {
+        "stitcher": [
+          "6",
+          0
+        ],
+        "inpainted_image": [
+          "16",
+          0
+        ]
+      }
+    },
+    "18": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/repaired",
+        "images": [
+          "17",
+          0
+        ]
+      }
+    }
+  }
+}

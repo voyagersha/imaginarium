@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from PIL import Image
 
 from . import __version__
 from .config import (
@@ -38,6 +39,24 @@ def _clip_stop_value(clip_skip: int) -> int:
 
 def _wf_path(kind: WorkflowKind) -> str:
     return str(Path("workflows") / "cli" / f"{kind.value}.json")
+
+
+def _sam3_mask_target_path(source_image: Path) -> Path:
+    source = source_image.expanduser()
+    return source.parent.parent / "masks" / f"mask_{source.name}"
+
+
+def _write_mask_at_target(source_mask: Path, target_mask: Path) -> Path:
+    target_mask.parent.mkdir(parents=True, exist_ok=True)
+    with Image.open(source_mask) as img:
+        mask = img.convert("L")
+        suffix = target_mask.suffix.lower()
+        save_kwargs: dict[str, object] = {}
+        if suffix in {".jpg", ".jpeg"}:
+            save_kwargs["quality"] = 95
+            save_kwargs["subsampling"] = 0
+        mask.save(target_mask, **save_kwargs)
+    return target_mask
 
 
 def _apply_lora_strengths(
@@ -91,6 +110,34 @@ def _apply_flux_guidance(
     value = float(flux_guidance)
     patch_values["flux_guidance_positive"] = value
     patch_values["flux_guidance_negative"] = value
+
+
+def _resolve_prompt_input(
+    *,
+    prompt: Optional[str],
+    prompt_file: Optional[Path],
+    option_label: str = "--prompt",
+) -> str:
+    prompt_text = (prompt or "").strip()
+    if prompt_file is not None and prompt_text:
+        raise typer.BadParameter(f"Use either {option_label} or --prompt-file, not both.")
+    if prompt_file is not None:
+        prompt_path = prompt_file.expanduser()
+        if not prompt_path.is_file():
+            raise typer.BadParameter(f"--prompt-file not found: {prompt_path}")
+        file_text = prompt_path.read_text(encoding="utf-8").strip()
+        if not file_text:
+            raise typer.BadParameter(f"--prompt-file is empty: {prompt_path}")
+        return file_text
+    if prompt_text:
+        maybe_path = Path(prompt_text).expanduser()
+        if maybe_path.is_file():
+            file_text = maybe_path.read_text(encoding="utf-8").strip()
+            if not file_text:
+                raise typer.BadParameter(f"{option_label} points to an empty file: {maybe_path}")
+            return file_text
+        return prompt_text
+    raise typer.BadParameter(f"Provide {option_label} or --prompt-file.")
 
 
 @app.command()
@@ -336,6 +383,42 @@ def run_img2img(
     typer.echo(json.dumps(res.__dict__, indent=2))
 
 
+@run_app.command("sam3-mask")
+def run_sam3_mask(
+    image: Path = typer.Option(..., "--image"),
+    prompt: str = typer.Option("face", "--prompt", help="Grounding prompt (for example: face, hair, person)."),
+    confidence_threshold: float = typer.Option(0.2, "--confidence-threshold", help="SAM3 score threshold in [0, 1]."),
+    max_detections: int = typer.Option(1, "--max-detections", help="Maximum detections to keep."),
+    offload_model: bool = typer.Option(False, "--offload-model/--no-offload-model", help="Offload SAM3 model between runs to reduce VRAM usage."),
+    model_path: str = typer.Option("models/sam3/sam3.pt", "--model-path", help="SAM3 checkpoint path relative to ComfyUI."),
+    comfy_url: str = typer.Option("http://127.0.0.1:8188"),
+    workflow: Optional[Path] = typer.Option(None, "--workflow", help="Override workflow JSON path."),
+) -> None:
+    patch_values = {
+        "init_image": "init.png",
+        "sam3_model_path": model_path,
+        "sam3_prompt": prompt,
+        "sam3_confidence_threshold": max(0.0, min(float(confidence_threshold), 1.0)),
+        "sam3_max_detections": max(1, int(max_detections)),
+        "sam3_offload_model": bool(offload_model),
+        "filename_prefix": "persona_stack/{run_id}/raw",
+    }
+    res = run_workflow(
+        base_url=comfy_url,
+        workflow_path=str(workflow) if workflow else str(Path("workflows") / "cli" / "sam3_mask.json"),
+        out_root=str(Path("runs") / "single"),
+        patch_values=patch_values,
+        init_image=str(image),
+    )
+    result = dict(res.__dict__)
+    if res.images:
+        source_image = image.expanduser()
+        target_mask = _sam3_mask_target_path(source_image)
+        final_mask = _write_mask_at_target(Path(res.images[0]), target_mask)
+        result["mask_path"] = str(final_mask)
+    typer.echo(json.dumps(result, indent=2))
+
+
 @run_app.command("img2img-identity")
 def run_img2img_identity(
     prompt: str = typer.Option(..., "--prompt"),
@@ -521,7 +604,8 @@ def run_scene(
 
 @run_app.command("inpaint")
 def run_inpaint(
-    prompt: str = typer.Option(..., "--prompt"),
+    prompt: Optional[str] = typer.Option(None, "--prompt", help="Prompt text, or a file path containing prompt text."),
+    prompt_file: Optional[Path] = typer.Option(None, "--prompt-file", help="Path to a prompt text/markdown file."),
     negative_prompt: str = typer.Option("", "--negative-prompt"),
     image: Path = typer.Option(..., "--image"),
     mask: Path = typer.Option(..., "--mask"),
@@ -537,14 +621,25 @@ def run_inpaint(
     mask_channel: str = typer.Option("red", "--mask-channel", help="Mask channel for LoadImageMask."),
     mask_threshold: float = typer.Option(0.2, "--mask-threshold", help="Threshold before grow."),
     mask_grow: int = typer.Option(4, "--mask-grow", help="Grow mask pixels before sampling."),
+    crop_mask_blend_pixels: Optional[int] = typer.Option(
+        None,
+        "--crop-mask-blend-pixels",
+        help="InpaintCropImproved mask blend pixels (if supported by workflow).",
+    ),
+    crop_context_from_mask_extend_factor: Optional[float] = typer.Option(
+        None,
+        "--crop-context-from-mask-extend-factor",
+        help="InpaintCropImproved crop context factor (if supported by workflow).",
+    ),
     dmd2_strength: Optional[float] = typer.Option(None, "--dmd2-strength", help="DMD2 LoRA strength (model+clip)."),
     lightning_strength: Optional[float] = typer.Option(None, "--lightning-strength", help="Lightning LoRA strength (model+clip)."),
     subtle_strength: Optional[float] = typer.Option(None, "--subtle-strength", help="Subtle Styles LoRA strength (model+clip)."),
     comfy_url: str = typer.Option("http://127.0.0.1:8188"),
     workflow: Optional[Path] = typer.Option(None, "--workflow", help="Override workflow JSON path."),
 ) -> None:
+    prompt_text = _resolve_prompt_input(prompt=prompt, prompt_file=prompt_file)
     patch_values = {
-        "positive_prompt": prompt,
+        "positive_prompt": prompt_text,
         "negative_prompt": negative_prompt,
         "clip_skip": _clip_stop_value(clip_skip),
         "seed": seed,
@@ -561,6 +656,10 @@ def run_inpaint(
         "mask_threshold": mask_threshold,
         "mask_grow": mask_grow,
     }
+    if crop_mask_blend_pixels is not None:
+        patch_values["crop_mask_blend_pixels"] = max(0, int(crop_mask_blend_pixels))
+    if crop_context_from_mask_extend_factor is not None:
+        patch_values["crop_context_from_mask_extend_factor"] = max(0.0, float(crop_context_from_mask_extend_factor))
     _apply_lora_strengths(patch_values, dmd2_strength, lightning_strength, subtle_strength)
     _apply_sampler_settings(patch_values, sampler_name, scheduler)
     default_workflow = Path("workflows") / "cli" / "inpaint_sdxl_inpaint.json"

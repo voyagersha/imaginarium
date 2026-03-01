@@ -1,0 +1,86 @@
+{
+  "persona_stack": {
+    "name": "sam3_mask",
+    "version": 1,
+    "patch_points": {
+      "init_image": {
+        "node_id": "1",
+        "input_key": "image"
+      },
+      "sam3_model_path": {
+        "node_id": "2",
+        "input_key": "model_path"
+      },
+      "sam3_prompt": {
+        "node_id": "3",
+        "input_key": "text_prompt"
+      },
+      "sam3_confidence_threshold": {
+        "node_id": "3",
+        "input_key": "confidence_threshold"
+      },
+      "sam3_max_detections": {
+        "node_id": "3",
+        "input_key": "max_detections"
+      },
+      "sam3_offload_model": {
+        "node_id": "3",
+        "input_key": "offload_model"
+      },
+      "filename_prefix": {
+        "node_id": "5",
+        "input_key": "filename_prefix"
+      }
+    }
+  },
+  "prompt": {
+    "1": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "init.png"
+      }
+    },
+    "2": {
+      "class_type": "LoadSAM3Model",
+      "inputs": {
+        "model_path": "models/sam3/sam3.pt"
+      }
+    },
+    "3": {
+      "class_type": "SAM3Grounding",
+      "inputs": {
+        "sam3_model": [
+          "2",
+          0
+        ],
+        "image": [
+          "1",
+          0
+        ],
+        "confidence_threshold": 0.2,
+        "text_prompt": "face",
+        "max_detections": 1,
+        "offload_model": false
+      }
+    },
+    "4": {
+      "class_type": "MaskToImage",
+      "inputs": {
+        "mask": [
+          "3",
+          0
+        ]
+      }
+    },
+    "5": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "persona_stack/template/raw",
+        "images": [
+          "4",
+          0
+        ]
+      }
+    }
+  }
+}

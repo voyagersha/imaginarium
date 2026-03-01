@@ -34,6 +34,15 @@ def _new_run_id() -> str:
     return f"{ts}-{uuid.uuid4().hex[:8]}"
 
 
+def _is_sam3_mps_runtime_error(message: str) -> bool:
+    msg = message.lower()
+    return (
+        "operationutils.mm" in msg
+        and "placeholder tensor is empty" in msg
+        and "mps" in msg
+    )
+
+
 def run_workflow(
     *,
     base_url: str,
@@ -187,7 +196,10 @@ def run_workflow(
     if isinstance(status, dict) and status.get("status_str") == "error":
         messages = status.get("messages") or []
         msg = "; ".join(str(m) for m in messages) if isinstance(messages, list) else str(messages)
-        raise ComfyUIError(f"ComfyUI execution failed: {msg} (run_dir={run_dir})")
+        hint = ""
+        if _is_sam3_mps_runtime_error(msg):
+            hint = " Hint: SAM3 hit a PyTorch MPS backend bug. Restart ComfyUI in CPU mode: COMFY_FORCE_CPU=1 make start."
+        raise ComfyUIError(f"ComfyUI execution failed: {msg}.{hint} (run_dir={run_dir})")
 
     images: list[str] = []
     outputs = history.get("outputs") or {}

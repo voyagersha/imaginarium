@@ -98,6 +98,59 @@ Use an input image as the starting point (keeps the image aspect ratio):
 uv run persona-stack run img2img --image path/to/input.png --prompt "a portrait photo" --denoise 0.5
 ```
 
+## SAM3 mask test (standalone)
+
+Run SAM3 grounding on one image and save only the generated mask:
+
+```bash
+uv run persona-stack run sam3-mask \
+  --image path/to/input.png \
+  --prompt "face" \
+  --confidence-threshold 0.2 \
+  --max-detections 1
+```
+
+The command also writes a copy to `../masks` relative to the source image folder as `mask_<source_filename>`.
+Example: input `anchors_identity/gio/candidates/IMG_9942.jpg` produces `anchors_identity/gio/masks/mask_IMG_9942.jpg`.
+
+If you hit a PyTorch MPS runtime error on Apple Silicon (for example `Placeholder tensor is empty`), run ComfyUI on CPU for SAM3:
+
+```bash
+make start-cpu
+```
+
+Then run Z-image headswap with that mask on your GPU ComfyUI instance:
+
+```bash
+uv run persona-stack run inpaint \
+  --image path/to/input.png \
+  --mask path/to/mask.png \
+  --prompt "a woman" \
+  --workflow workflows/cli/img2img_headswap_z_image_turbo_v1_mask_input.json
+```
+
+For the mask-input Z-image workflow, you can tune crop blending/context directly:
+
+```bash
+uv run persona-stack run inpaint \
+  --image path/to/input.png \
+  --mask path/to/mask.png \
+  --prompt "a woman" \
+  --workflow workflows/cli/img2img_headswap_z_image_turbo_v1_mask_input.json \
+  --crop-mask-blend-pixels 32 \
+  --crop-context-from-mask-extend-factor 1.4
+```
+
+You can also load prompt text from a file:
+
+```bash
+uv run persona-stack run inpaint \
+  --image path/to/input.png \
+  --mask path/to/mask.png \
+  --prompt-file .local_models/docs/prompts/inpaint.md \
+  --workflow workflows/cli/img2img_headswap_z_image_turbo_v1_mask_input.json
+```
+
 ## Image-to-image + identity anchors
 
 Use an input image for body/pose and identity anchors for face consistency:

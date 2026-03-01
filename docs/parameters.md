@@ -1,99 +1,224 @@
 # Parameter Mental Model
 
-This doc explains how the CLI parameters map to ComfyUI workflows and how to
-reason about them. A parameter only has an effect if the workflow has a matching
-patch point. If a workflow does not expose a patch point, the parameter is
-ignored.
+This doc explains what each CLI parameter does and how to tune it in practice.
+It is guidance-first, but kept aligned with current code/workflows.
 
-## Common Parameters (All Models)
+Source of truth:
 
-These show up across most workflows and models in `manifests/models.json`
-(SDXL, Flux.2 klein, Z-Image Turbo).
+- `src/persona_stack/cli.py`
+- `workflows/cli/*.json` patch points
 
-- prompt: What you want. Think "target description." More specific = more
-  controlled, but also less flexible.
-- negative_prompt: What to avoid. Works by pushing the model away from those
-  concepts. Overusing it can reduce quality or fight the positive prompt.
-- seed: Controls determinism. Same inputs + same seed -> same output.
-- steps: Number of denoising iterations. More steps = more compute and usually
-  higher fidelity (up to a point).
-- cfg: Classifier-free guidance scale. Higher values push the output to match
-  the prompt more literally, but can create artifacts or harsh lighting.
-- sampler_name: The sampling algorithm (euler, dpmpp_sde, etc). Think "how the
-  model walks down the noise schedule."
-- scheduler: The noise schedule (normal, karras, sgm_uniform, etc). Think
-  "how step sizes are distributed over time."
-- width/height: Output resolution (txt2img, character, style, scene, inpaint).
-  Larger sizes cost more memory and compute.
-- batch_size: Number of images generated per run. Larger batch = more memory.
-- clip_skip: How many final CLIP layers to skip.
+Core rule: a CLI option only has an effect if the selected workflow exposes a
+matching `persona_stack.patch_points` key. If not, the option is ignored.
 
-## Img2img / Inpaint Parameters
+## Quick Command Map
 
-- image: The init image. Think "what to preserve."
-- denoise: How far to drift from the init image.
-  - 0.1-0.3: small edits, strong identity preservation
-  - 0.3-0.6: moderate edits (outfit, lighting, background)
-  - 0.6-1.0: large changes, can fully reimagine the image
-- mask (inpaint): White = replace, black = keep. Inpaint only touches masked
-  regions, so good masks are the biggest quality lever.
+- `persona-stack version`
+- `persona-stack bootstrap-check`
+- `persona-stack validate`
+- `persona-stack grids`
+- `persona-stack run character`
+- `persona-stack run txt2img`
+- `persona-stack run img2img`
+- `persona-stack run sam3-mask`
+- `persona-stack run img2img-identity`
+- `persona-stack run style`
+- `persona-stack run scene`
+- `persona-stack run inpaint`
 
-## Identity / Anchor Parameters
+## Common Generation Parameters
 
-Used by character, scene, and img2img-identity workflows.
+These are the main image-quality/control levers across most run modes.
 
-- anchors: Reference images. Think "identity anchor set."
-- anchor_count: Max number of anchors to use (1-5). More anchors = stronger
-  identity signal, but also more compute.
-- anchor_pad: Pad to square before upload. Helps avoid face cropping when a
-  model expects square inputs.
-- anchor_pad_color: Background color for padding (name or R,G,B).
-- anchor_max_side: Resize anchors so the longest side is <= this size. Lowers
-  memory and speeds uploads at the cost of fine detail.
-- anchor_weight_scale: Multiplies the anchor weights. >1 = stronger identity,
-  <1 = looser identity.
+- `--prompt`: the target description.
+  - More specific prompt = tighter control.
+  - Overly long prompts can overconstrain and reduce naturalness.
+- `--negative-prompt`: what to avoid.
+  - Useful for persistent artifacts.
+  - Too aggressive negatives can fight the main prompt.
+- `--seed`: determinism.
+  - Same seed + same inputs + same workflow = reproducible output.
+  - Change seed when stuck in a bad local minimum.
+- `--steps`: denoising iterations.
+  - More steps usually improves detail, up to diminishing returns.
+  - If speed matters, lower steps before lowering resolution.
+- `--cfg`: prompt adherence strength.
+  - Lower cfg = more natural but less literal.
+  - Higher cfg = stricter prompt but easier to overcook.
+- `--sampler-name`: sampling algorithm.
+  - Influences texture, sharpness, and convergence behavior.
+- `--scheduler`: step-distribution schedule.
+  - Changes how sampler effort is allocated over denoise trajectory.
+- `--clip-skip`: CLIP truncation amount (internally clamped and negated).
+  - Higher skip can shift style/prompt interpretation.
+- `--workflow`: choose workflow template.
+  - This is often the biggest behavior switch (model family + node graph).
+- `--comfy-url`: ComfyUI endpoint.
 
-## Style / Scene Parameters
+## Resolution and Batch Controls
 
-- stylepack: A directory that contains a `refs/` folder of style references.
-- style_ref: Explicit style reference image path (repeatable). More refs bias
-  style more strongly.
-- style_strength / cuteness_strength: Strength of a style LoRA if the workflow
-  includes one. Use cuteness_strength as an alias.
+Used by text-first layout workflows (`txt2img`, `character`, `style`, `scene`).
 
-## Pose Parameters (ControlNet)
+- `--width` and `--height`: output resolution.
+  - Bigger = more detail and composition room.
+  - Bigger = much higher VRAM + runtime cost.
+- `--batch-size`: images per run.
+  - Higher batch improves throughput if VRAM allows.
 
-Only used by pose-enabled workflows.
+Note: `run inpaint` currently exposes `--width` and `--height` in CLI, but
+shipped inpaint workflows do not expose width/height patch points, so they are
+usually ignored unless your custom workflow adds those keys.
 
-- pose_image: Reference pose image.
-- pose_strength: How strongly to enforce the pose (0-1).
-- pose_start / pose_end: Portion of the denoising schedule where pose is active.
-  Short ranges reduce pose influence.
+## Img2img and Inpaint Parameters
 
-## Model-Specific Parameters
+- `--image`: init image / base image.
+  - Controls structure, pose, and composition prior.
+- `--denoise`: edit intensity.
+  - `0.1-0.3`: subtle edits, strong preservation.
+  - `0.3-0.6`: medium edits (clothes, lighting, local scene).
+  - `0.6-1.0`: heavy rewrites, weaker preservation.
+- `--mask` (inpaint): white edits, black preserves.
+  - Cleaner masks produce cleaner boundaries.
+- `--mask-channel`: channel used by `LoadImageMask` (default `red`).
+- `--mask-threshold`: binarize mask before grow.
+  - Lower threshold includes more gray edge pixels.
+  - Higher threshold tightens edited region.
+- `--mask-grow`: expand mask in pixels after threshold.
+  - Helps avoid hard seams.
+  - Too high can spill edits outside intended area.
 
-These are only effective if the workflow includes the matching nodes.
+Inpaint crop/stitch options (only if workflow supports them):
 
-- flux_guidance: Flux.2 guidance value. Flux workflows use both cfg and
-  flux_guidance; in practice keep cfg around 1.0 and adjust flux_guidance
-  (1.0-2.0) for prompt adherence.
-- dmd2_strength: Strength of the DMD2 LoRA (model + clip). Best for fast,
-  high-quality runs at low steps.
-- lightning_strength: Strength of the SDXL Lightning LoRA. Optimized for very
-  low steps; can add contrast and sharpness.
-- subtle_strength: Strength of Subtle Styles LoRAs. Adds style details and
-  contrast; reduce for cleaner, more neutral results.
+- `--crop-mask-blend-pixels`
+  - Blending width around crop boundary.
+  - Higher = softer transitions, lower seam risk, but can bleed edits.
+- `--crop-context-from-mask-extend-factor`
+  - How much extra context around mask is included in crop.
+  - Higher = better context coherence, but larger edited neighborhood.
 
-## Execution Parameters
+## Prompt Input Behavior (Inpaint)
 
-- workflow: Overrides the default workflow JSON path. Use this to switch between
-  SDXL, Flux.2, or Z-Image Turbo templates.
-- comfy_url: ComfyUI server URL (default: http://127.0.0.1:8188).
+`run inpaint` accepts either prompt text or a prompt file:
 
-## Quick Mental Model Summary
+- `--prompt "text"`
+- `--prompt-file path/to/prompt.md`
 
-- Resolution and steps drive compute the most.
-- denoise controls "how much the input image can change."
-- cfg controls "how literal the prompt is."
-- anchors and pose are stronger than prompt alone; use them when identity/pose
-  must stay stable.
+Behavior:
+
+- If `--prompt-file` is provided, file contents are used.
+- If `--prompt` points to an existing file path, that file is read.
+- Passing both `--prompt` and `--prompt-file` is rejected.
+- One of them is required for inpaint.
+
+## Identity Anchor Parameters
+
+Used by `character`, `scene`, and `img2img-identity`.
+
+- `--anchors`: reference images (file/dir, repeatable).
+- `--anchor-count`: max anchors to use (clamped `1..5`).
+  - More anchors = stronger identity consistency.
+  - Too many diverse anchors can blur identity.
+- `--anchor-pad` / `--no-anchor-pad`: square pad before upload.
+  - Padding improves fit for square-oriented pipelines.
+- `--anchor-pad-color`: pad color (`black`, `white`, `R,G,B`, etc.).
+- `--anchor-max-side`: optional anchor resize cap.
+  - Lower values reduce upload/memory cost.
+- `--anchor-weight-scale`: global identity strength scale.
+  - `>1` stronger identity pull.
+  - `<1` looser identity pull.
+
+## Style Reference Parameters
+
+Used by `style` and `scene`.
+
+- `--stylepack`: directory with `refs/`.
+- `--style-ref`: explicit style reference image(s), repeatable.
+
+Practical note: style references bias color/texture/composition language more
+than wording alone. Keep references consistent if you want stable style.
+
+## Pose Parameters
+
+Used by pose-capable variants of `character` and `scene`.
+
+- `--pose-image`: pose reference.
+- `--pose-strength`: pose enforcement amount.
+- `--pose-start` and `--pose-end`: denoise schedule window where pose is active.
+  - Narrow window can preserve style/identity while still constraining pose.
+
+Default workflow selection:
+
+- `run character`: uses `character_pose` if `--pose-image` is set, otherwise
+  `character`.
+- `run scene`: uses `scene_pose` if `--pose-image` is set, otherwise `scene`.
+
+## Model-Specific Controls
+
+These only work when workflow patch points exist.
+
+- `--flux-guidance`
+  - Flux-only guidance value (mapped to positive/negative flux guidance keys).
+  - Typical practical band is around `1.0-2.0` with cfg near `1.0`.
+- `--dmd2-strength`
+  - LoRA strength for DMD2 (model + clip).
+  - Useful for low-step quality/speed tradeoff.
+- `--lightning-strength`
+  - LoRA strength for SDXL Lightning (model + clip).
+  - Useful for very low-step fast workflows.
+- `--subtle-strength`
+  - LoRA strength for Subtle Styles (model + clip).
+  - Adds stylization/contrast; lower for cleaner look.
+- `--style-strength` and `--cuteness-strength`
+  - Available in `txt2img` and `img2img`.
+  - `--cuteness-strength` is an alias for `--style-strength`.
+
+## SAM3 Mask Command Guidance
+
+`run sam3-mask` generates segmentation-style masks from text grounding.
+
+- `--prompt`: what to segment (`face`, `hair`, `person`, etc.).
+- `--confidence-threshold`: confidence gate (`0..1`).
+  - Higher = fewer, cleaner detections.
+  - Lower = more detections, more false positives.
+- `--max-detections`: cap number of detections (minimum 1).
+- `--offload-model`: reduce VRAM pressure between runs.
+- `--model-path`: SAM3 checkpoint path in ComfyUI model tree.
+
+Output:
+
+- Standard run output under `runs/single/...`.
+- Convenience mask copy to `../masks/mask_<source_filename>` relative to input.
+
+## Workflow-Gated Parameters (Current Repo)
+
+Flux guidance patch keys currently appear in:
+
+- `workflows/cli/txt2img_flux2_klein.json`
+- `workflows/cli/img2img_flux2_klein.json`
+- `workflows/cli/img2img_identity_flux2_klein.json`
+
+Inpaint crop controls currently appear in:
+
+- `workflows/cli/img2img_headswap_z_image_turbo_v1_mask_input.json`
+- Patch keys:
+  - `crop_mask_blend_pixels`
+  - `crop_context_from_mask_extend_factor`
+
+SAM3 patch keys currently appear in:
+
+- `workflows/cli/sam3_mask.json`
+- Patch keys:
+  - `sam3_prompt`
+  - `sam3_confidence_threshold`
+  - `sam3_max_detections`
+  - `sam3_offload_model`
+  - `sam3_model_path`
+
+## Quick Tuning Heuristics
+
+- If output is off-topic: raise `cfg` modestly or improve prompt specificity.
+- If output looks overcooked: lower `cfg` or reduce LoRA strengths.
+- If not enough change in img2img/inpaint: increase `denoise`.
+- If identity drifts: add/clean anchors and raise `anchor-weight-scale`.
+- If inpaint seams appear: slightly raise `mask-grow`, or use crop blend/context
+  controls on supporting workflows.

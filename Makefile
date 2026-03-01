@@ -1,4 +1,4 @@
-.PHONY: bootstrap start models validate smoke-test export-workflows install-gui-workflows
+.PHONY: bootstrap start start-cpu models validate smoke-test export-workflows install-gui-workflows
 
 # Auto-load local env vars (HF_TOKEN, etc) if present.
 ifneq (,$(wildcard .env))
@@ -17,6 +17,9 @@ bootstrap:
 
 start:
 	COMFY_PORT=$(COMFY_PORT) bash scripts/start_comfy.sh
+
+start-cpu:
+	COMFY_FORCE_CPU=1 COMFY_PORT=$(COMFY_PORT) bash scripts/start_comfy.sh
 
 export-workflows:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run python scripts/export_workflow_templates.py
